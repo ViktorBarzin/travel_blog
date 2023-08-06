@@ -1,0 +1,15 @@
+kind: pipeline
+type: kubernetes
+name: default
+
+steps:
+  - name: Build image
+    image: plugins/docker
+      repo: viktorbarzin/travel_blog
+      dockerfile: Dockerfile
+      auto_tag: true
+  - name: Update deployment
+    image: alpine
+    commands:
+      - "apk add curl"
+      - 'curl -X PATCH https://kubernetes:6443/apis/apps/v1/namespaces/travel_blog/deployments/travel-blog -H "Authorization:Bearer $(cat /var/run/secrets/kubernetes.io/serviceaccount/token)" -H "Content-Type:application/strategic-merge-patch+json" -k -d ''{"spec": {"template": {"metadata": { "annotations": {"kubectl.kubernetes.io/restartedAt": "''$(date +%Y-%m-%dT%TZ)''" }}}}}'' | head'
